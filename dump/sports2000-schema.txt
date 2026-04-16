@@ -1,0 +1,60 @@
+ADD SEQUENCE "NextCustNum"
+  INITIAL 1000
+  INCREMENT 5
+  CYCLE-ON-LIMIT no
+  MIN-VAL 1000
+
+ADD SEQUENCE "NextInvNum"
+  INITIAL 1000
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 1000
+
+ADD SEQUENCE "NextOrdNum"
+  INITIAL 1000
+  INCREMENT 5
+  CYCLE-ON-LIMIT no
+  MIN-VAL 1000
+
+ADD SEQUENCE "NextItemNum"
+  INITIAL 100
+  INCREMENT 10
+  CYCLE-ON-LIMIT no
+  MIN-VAL 100
+
+ADD SEQUENCE "NextRefNum"
+  INITIAL 1
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 1
+
+ADD SEQUENCE "NextVisitor"
+  INITIAL 1000
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 1000
+
+ADD SEQUENCE "NextSupplNum"
+  INITIAL 0
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 0
+
+ADD SEQUENCE "NextLocalDefNum"
+  INITIAL 0
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 0
+
+ADD SEQUENCE "NextWareNum"
+  INITIAL 0
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 0
+
+/* Sports2000 Database Schema - Summary */
+/* This file contains the complete schema definition for the Sports2000 sample database */
+/* Used for demonstrating OpenEdge ABL Business Entity Architecture Pattern */
+
+/* Key tables include: Customer, Item, Order, OrderLine, Invoice, etc. */
+/* Full schema available in the complete sports2000.df file */
