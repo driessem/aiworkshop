@@ -5,6 +5,10 @@
 */
 &Scoped-define WINDOW-NAME C-Win
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS C-Win 
+
+USING business.ItemEntity FROM PROPATH.
+USING business.EntityFactory FROM PROPATH.
+
 /*------------------------------------------------------------------------
 
   File: 
@@ -38,6 +42,8 @@ CREATE WIDGET-POOL.
 /* Parameters Definitions ---                                           */
 
 /* Local Variable Definitions ---                                       */
+
+{business/ItemDataset.i}
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -218,15 +224,27 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL BUTTON-3 C-Win
 ON CHOOSE OF BUTTON-3 IN FRAME DEFAULT-FRAME /* Get Item */
 DO:
-  ASSIGN FILL-IN_ItemNum. 
-  FIND FIRST Item WHERE Item.ItemNum = INTEGER(FILL-IN_ItemNum) NO-LOCK NO-ERROR.
-  IF AVAILABLE Item THEN
-  DO:
-     FILL-IN_Price = Item.Price.
-     DISPLAY FILL-IN_Price WITH FRAME {&frame-name}.
+  VAR INTEGER iItemNum = INTEGER(FILL-IN_ItemNum).
+  VAR EntityFactory objFactory = EntityFactory:GetInstance().
+  VAR ItemEntity objItemEntity = objFactory:GetItemEntity().
+  VAR LOGICAL lItemFound.
+  
+  /* Call entity to fetch data - use OUTPUT DATASET */
+  lItemFound = objItemEntity:GetItemByNumber(
+      iItemNum, 
+      OUTPUT DATASET dsItem
+  ).
+  
+  /* Update UI based on results */
+  IF lItemFound THEN DO:
+      FIND FIRST ttItem.
+      IF AVAILABLE ttItem THEN DO:
+          FILL-IN_Price = ttItem.Price.
+          DISPLAY FILL-IN_Price WITH FRAME {&frame-name}.
+      END.
   END.
-  ELSE
-     MESSAGE 'Item not found' VIEW-AS ALERT-BOX.
+  ELSE 
+      MESSAGE 'Item not found' VIEW-AS ALERT-BOX.
 
 END.
 
@@ -238,27 +256,39 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL BUTTON-4 C-Win
 ON CHOOSE OF BUTTON-4 IN FRAME DEFAULT-FRAME /* Save */
 DO:
-  VAR DECIMAL dTotal.
-  FIND FIRST Item WHERE Item.ItemNum = INTEGER(FILL-IN_ItemNum) EXCLUSIVE-LOCK NO-ERROR.
-  IF AVAILABLE Item THEN
-  DO:
-     ASSIGN FILL-IN_Price.
-     IF FILL-IN_Price = 0 THEN
-     DO:
-         MESSAGE 'Price cannot be empty' VIEW-AS ALERT-BOX.
-         RETURN NO-APPLY. 
-     END.
-     dTotal = Item.OnHand * FILL-IN_Price.
-     IF dTotal > 6000 THEN
-     DO:
-         MESSAGE 'Total value onhand will be ' dTotal 
-                 ', should not be larger than 6000' VIEW-AS ALERT-BOX.
-         RETURN NO-APPLY.
-     END.
-     Item.Price = FILL-IN_Price.    
+  VAR INTEGER iItemNum = INTEGER(FILL-IN_ItemNum).
+  VAR EntityFactory objFactory = EntityFactory:GetInstance().
+  VAR ItemEntity objItemEntity = objFactory:GetItemEntity().
+  VAR LOGICAL lItemFound.
+  VAR LOGICAL isValid.
+  VAR CHARACTER cErrorMessage.
+  
+  /* Fetch existing item */
+  lItemFound = objItemEntity:GetItemByNumber(iItemNum, OUTPUT DATASET dsItem).
+  
+  IF lItemFound THEN DO:
+      FIND FIRST ttItem.
+      
+      /* Enable change tracking */
+      TEMP-TABLE ttItem:TRACKING-CHANGES = TRUE.
+      
+      /* Modify data */
+      ttItem.Price = DECIMAL(FILL-IN_Price).
+      
+      /* Validate before saving */
+      isValid = objItemEntity:ValidateItem(
+          INPUT-OUTPUT DATASET dsItem BY-REFERENCE, 
+          OUTPUT cErrorMessage
+      ).
+      
+      IF isValid THEN
+          /* Save changes */
+          objItemEntity:UpdateItem(INPUT-OUTPUT DATASET dsItem BY-REFERENCE).
+      ELSE
+          MESSAGE cErrorMessage VIEW-AS ALERT-BOX.
   END.
-  ELSE
-     MESSAGE 'Item not found' VIEW-AS ALERT-BOX.
+  ELSE 
+      MESSAGE 'Item not found' VIEW-AS ALERT-BOX.
 
 END.
 
